@@ -1,36 +1,438 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Flow Journal</title>
+    <title>Color Memory Rush - Test Your Memory!</title>
+    <meta name="description" content="An addictive color memory game with stunning visuals and smooth animations">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background: #f4f4f9; display: flex; justify-content: center; padding: 20px; }
-        .container { max-width: 600px; width: 100%; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #333; font-size: 1.5rem; }
-        textarea { width: 100%; height: 300px; margin-top: 20px; border: 1px solid #ddd; border-radius: 4px; padding: 10px; font-size: 1.1rem; line-height: 1.6; outline: none; transition: all 0.3s; }
-        textarea:focus { border-color: #a29bfe; box-shadow: 0 0 8px rgba(162, 155, 254, 0.5); }
-        .controls { margin-top: 10px; display: flex; gap: 10px; }
-        button { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; background: #6c5ce7; color: white; }
-        .focus-mode { background: white !important; padding: 0 !important; }
-        .focus-mode .container { box-shadow: none; max-width: 800px; }
-        .focus-mode h1, .focus-mode p { display: none; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .game-container:hover {
+            transform: translateY(-5px);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            margin-bottom: 10px;
+            animation: titlePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes titlePulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            gap: 15px;
+        }
+
+        .score-item {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 15px 25px;
+            border-radius: 15px;
+            text-align: center;
+            flex: 1;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .score-item:hover {
+            transform: scale(1.05);
+        }
+
+        .score-label {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-value {
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin-top: 5px;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 100%);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '?';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #999;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover:not(.flipped):not(.matched) {
+            transform: scale(1.05) rotateZ(5deg);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .card.flipped,
+        .card.matched {
+            transform: rotateY(180deg);
+        }
+
+        .card.flipped::before,
+        .card.matched::before {
+            opacity: 0;
+        }
+
+        .card.matched {
+            animation: matchPulse 0.6s ease;
+            cursor: default;
+        }
+
+        @keyframes matchPulse {
+
+            0%,
+            100% {
+                transform: scale(1) rotateY(180deg);
+            }
+
+            50% {
+                transform: scale(1.1) rotateY(180deg);
+            }
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            min-width: 140px;
+            padding: 15px 30px;
+            font-size: 1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Outfit', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(240, 147, 251, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .victory-message {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 20px;
+            margin-bottom: 20px;
+            animation: victoryBounce 0.6s ease;
+        }
+
+        .victory-message.show {
+            display: block;
+        }
+
+        @keyframes victoryBounce {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .victory-message h2 {
+            color: white;
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+
+        .victory-message p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+        }
+
+        /* Responsive design */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .game-grid {
+                gap: 10px;
+            }
+
+            .game-container {
+                padding: 25px;
+            }
+        }
     </style>
 </head>
+
 <body>
-    <div class="container" id="mainContainer">
-        <h1>Digital Flow State</h1>
-        <p>Type the prompt "The truth is..." and don't stop moving your fingers.</p>
-        <textarea placeholder="Start typing here..."></textarea>
+    <div class="game-container">
+        <h1>🎮 Color Memory Rush</h1>
+        <p class="subtitle">Match all the pairs to win!</p>
+
+        <div class="score-board">
+            <div class="score-item">
+                <div class="score-label">Moves</div>
+                <div class="score-value" id="moves">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">Matches</div>
+                <div class="score-value" id="matches">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">Best</div>
+                <div class="score-value" id="best">-</div>
+            </div>
+        </div>
+
+        <div class="victory-message" id="victoryMessage">
+            <h2>🎉 Victory!</h2>
+            <p>You won in <span id="finalMoves">0</span> moves!</p>
+        </div>
+
+        <div class="game-grid" id="gameGrid"></div>
+
         <div class="controls">
-            <button onclick="toggleFocus()">Toggle Focus Mode</button>
-            <button onclick="clearText()" style="background:#ff7675;">Clear Page</button>
+            <button class="btn-primary" onclick="startGame()">New Game</button>
+            <button class="btn-secondary" onclick="resetStats()">Reset Stats</button>
         </div>
     </div>
 
     <script>
-        function toggleFocus() { document.body.classList.toggle('focus-mode'); }
-        function clearText() { if(confirm("Clear your session?")) document.querySelector('textarea').value = ''; }
+        const colors = [
+            'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+            'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+            'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+            'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
+            'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+            'linear-gradient(135deg, #ff9a56 0%, #ff6a88 100%)'
+        ];
+
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let moves = 0;
+        let canFlip = true;
+
+        function initGame() {
+            const gameGrid = document.getElementById('gameGrid');
+            gameGrid.innerHTML = '';
+
+            // Create pairs of cards
+            const cardColors = [...colors, ...colors];
+            cardColors.sort(() => Math.random() - 0.5);
+
+            cards = cardColors.map((color, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.color = color;
+                card.dataset.index = index;
+                card.addEventListener('click', flipCard);
+                gameGrid.appendChild(card);
+                return card;
+            });
+
+            flippedCards = [];
+            matchedPairs = 0;
+            moves = 0;
+            canFlip = true;
+
+            updateScore();
+            document.getElementById('victoryMessage').classList.remove('show');
+        }
+
+        function flipCard() {
+            if (!canFlip || this.classList.contains('flipped') || this.classList.contains('matched')) {
+                return;
+            }
+
+            this.classList.add('flipped');
+            this.style.background = this.dataset.color;
+            flippedCards.push(this);
+
+            if (flippedCards.length === 2) {
+                canFlip = false;
+                moves++;
+                updateScore();
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            const [card1, card2] = flippedCards;
+
+            if (card1.dataset.color === card2.dataset.color) {
+                // Match found!
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                matchedPairs++;
+                updateScore();
+                flippedCards = [];
+                canFlip = true;
+
+                if (matchedPairs === colors.length) {
+                    setTimeout(showVictory, 500);
+                }
+            } else {
+                // No match
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    card1.style.background = 'linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 100%)';
+                    card2.style.background = 'linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 100%)';
+                    flippedCards = [];
+                    canFlip = true;
+                }, 800);
+            }
+        }
+
+        function updateScore() {
+            document.getElementById('moves').textContent = moves;
+            document.getElementById('matches').textContent = matchedPairs;
+
+            const best = localStorage.getItem('colorMemoryBest');
+            if (best) {
+                document.getElementById('best').textContent = best;
+            }
+        }
+
+        function showVictory() {
+            const victoryMsg = document.getElementById('victoryMessage');
+            document.getElementById('finalMoves').textContent = moves;
+            victoryMsg.classList.add('show');
+
+            // Update best score
+            const best = localStorage.getItem('colorMemoryBest');
+            if (!best || moves < parseInt(best)) {
+                localStorage.setItem('colorMemoryBest', moves);
+                updateScore();
+            }
+        }
+
+        function startGame() {
+            initGame();
+        }
+
+        function resetStats() {
+            if (confirm('Reset your best score?')) {
+                localStorage.removeItem('colorMemoryBest');
+                document.getElementById('best').textContent = '-';
+            }
+        }
+
+        // Initialize game on load
+        window.addEventListener('load', initGame);
     </script>
 </body>
+
 </html>
